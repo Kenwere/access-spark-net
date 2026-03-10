@@ -5,6 +5,8 @@ import {
   Router, Trophy, Settings, ChevronLeft, Wifi, LogOut, Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
