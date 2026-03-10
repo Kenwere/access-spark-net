@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wifi, Mail, Lock, Loader2 } from "lucide-react";
+import { Wifi, Mail, Lock, Loader as Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Login() {

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Zap, Package as PackageIcon } from "lucide-react";
+import { Plus, CreditCard as Edit, Trash2, Zap, Package as PackageIcon } from "lucide-react";
 
 interface Package {
   id: string;

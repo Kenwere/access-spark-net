@@ -21,7 +21,7 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-4">
             <div><Label>Business Name</Label><Input placeholder="Your Business Name" className="mt-1.5" /></div>
-            <div><Label>Business Logo URL</Label><Input placeholder="https://..." className="mt-1.5" /></div>
+            <div><Label>Business Logo URL</Label><Input placeholder="https://..." className=\"mt-1.5" /></div>
             <div><Label>Support Phone</Label><Input placeholder="+254712345678" className="mt-1.5" /></div>
             <div><Label>Welcome Message</Label><Input placeholder="Welcome to fast, reliable WiFi!" className="mt-1.5" /></div>
 
