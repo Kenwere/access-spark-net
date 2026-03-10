@@ -71,7 +71,11 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border space-y-1">
+        <div className="flex items-center justify-between px-1">
+          <ThemeToggle />
+          {!collapsed && <span className="text-xs text-sidebar-foreground">Theme</span>}
+        </div>
         <Link
           to="/portal"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"

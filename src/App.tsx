@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Dashboard from "./pages/Dashboard";
 import Packages from "./pages/Packages";
 import UsersPage from "./pages/UsersPage";
@@ -18,24 +19,26 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/packages" element={<Packages />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/vouchers" element={<Vouchers />} />
-          <Route path="/routers" element={<Routers />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/portal" element={<CaptivePortal />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/packages" element={<Packages />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/vouchers" element={<Vouchers />} />
+            <Route path="/routers" element={<Routers />} />
+            <Route path="/rankings" element={<Rankings />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/portal" element={<CaptivePortal />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
