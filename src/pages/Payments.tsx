@@ -1,23 +1,34 @@
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Search, Download, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Payment {
+  id: string;
+  phone: string;
+  package_name: string;
+  amount: number;
+  method: string;
+  router_name: string | null;
+  session_expiry: string | null;
+  status: string;
+  transaction_id: string | null;
+  created_at: string;
+}
 
 export default function Payments() {
-  const [payments, setPayments] = useState<Array<{
-    phone: string;
-    package: string;
-    amount: number;
-    method: string;
-    time: string;
-    date: string;
-    status: string;
-    router: string;
-    expiry: string;
-  }>>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("payments").select("*").order("created_at", { ascending: false })
+      .then(({ data }) => { setPayments((data as any[]) || []); setLoading(false); });
+  }, []);
+
   const filtered = payments.filter(p => p.phone.includes(search));
 
   return (
@@ -32,7 +43,9 @@ export default function Payments() {
         </div>
       </PageHeader>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+      ) : filtered.length === 0 ? (
         <div className="glass-card rounded-xl p-12 text-center">
           <Receipt className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
           <p className="text-sm text-muted-foreground">No payments yet</p>
@@ -48,24 +61,20 @@ export default function Payments() {
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">Package</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">Amount</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">Method</th>
-                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Time</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">Date</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">Router</th>
-                  <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">Expiry</th>
                   <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p, i) => (
-                  <tr key={i} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                {filtered.map((p) => (
+                  <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 font-mono text-xs">{p.phone}</td>
-                    <td className="py-3 px-4">{p.package}</td>
+                    <td className="py-3 px-4">{p.package_name}</td>
                     <td className="py-3 px-4 font-medium">KSH {p.amount}</td>
                     <td className="py-3 px-4 hidden md:table-cell">{p.method}</td>
-                    <td className="py-3 px-4">{p.time}</td>
-                    <td className="py-3 px-4">{p.date}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell">{p.router}</td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-xs">{p.expiry}</td>
+                    <td className="py-3 px-4 text-xs">{new Date(p.created_at).toLocaleString()}</td>
+                    <td className="py-3 px-4 hidden lg:table-cell">{p.router_name || "—"}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         p.status === "Completed" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"
