@@ -52,9 +52,9 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" subtitle="Overview of your hotspot network" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={DollarSign} title="Today's Revenue" value={`KSH ${stats.revenue.toLocaleString()}`} change={stats.revenue > 0 ? "From payments" : "No revenue yet"} changeType={stats.revenue > 0 ? "positive" : "neutral"} />
-        <StatCard icon={Users} title="Active Users" value={String(stats.activeUsers)} change={stats.activeUsers > 0 ? "Currently connected" : "No users yet"} changeType={stats.activeUsers > 0 ? "positive" : "neutral"} />
-        <StatCard icon={Wifi} title="Active Sessions" value={String(stats.activeSessions)} change={stats.activeSessions > 0 ? "Live now" : "No sessions yet"} changeType={stats.activeSessions > 0 ? "positive" : "neutral"} />
+        <StatCard icon={DollarSign} title="Today's Revenue" value={`KSH ${stats.revenue.toLocaleString()}`} change={stats.revenue > 0 ? "From payments" : "No revenue yet"} changeType={stats.revenue > 0 ? "up" : "neutral"} />
+        <StatCard icon={Users} title="Active Users" value={String(stats.activeUsers)} change={stats.activeUsers > 0 ? "Currently connected" : "No users yet"} changeType={stats.activeUsers > 0 ? "up" : "neutral"} />
+        <StatCard icon={Wifi} title="Active Sessions" value={String(stats.activeSessions)} change={stats.activeSessions > 0 ? "Live now" : "No sessions yet"} changeType={stats.activeSessions > 0 ? "up" : "neutral"} />
         <StatCard icon={Clock} title="Total Payments" value={String(stats.totalPayments)} change={stats.totalPayments > 0 ? "All time" : "No data"} changeType="neutral" />
       </div>
 
