@@ -1,1 +1,4 @@
 project_id = "zakwbqlburshmdjptcwb"
+
+[functions.provision-router]
+verify_jwt = false

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Router as RouterIcon, Settings, Wifi, WifiOff, Copy, Check, Terminal, RefreshCw } from "lucide-react";
+import { Plus, Router as RouterIcon, Settings, Wifi, WifiOff, Copy, Check, Link2, Download, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { generateMikroTikScript } from "@/lib/mikrotik-script";
@@ -28,17 +28,19 @@ interface RouterDevice {
   session_logging: boolean;
   dns_name: string | null;
   hotspot_address: string | null;
+  provision_token: string | null;
+  org_id: string | null;
 }
 
 export default function Routers() {
   const [routers, setRouters] = useState<RouterDevice[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
+  const [provisionDialogOpen, setProvisionDialogOpen] = useState(false);
   const [selectedRouter, setSelectedRouter] = useState<RouterDevice | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Form state
   const [form, setForm] = useState({
     name: "", location: "", ip_address: "192.168.88.1", api_port: 8728,
     username: "admin", password: "", dns_name: "hotspot.local",
@@ -46,57 +48,89 @@ export default function Routers() {
     disable_sharing: false, device_tracking: true, bandwidth_control: true, session_logging: true,
   });
 
-  const portalUrl = window.location.origin + "/portal";
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   useEffect(() => { fetchRouters(); }, []);
 
   const fetchRouters = async () => {
     const { data, error } = await supabase.from("routers").select("*").order("created_at", { ascending: false });
-    if (error) { toast.error("Failed to load routers"); }
-    else { setRouters((data as any[]) || []); }
+    if (error) toast.error("Failed to load routers");
+    else setRouters((data as any[]) || []);
     setLoading(false);
   };
 
   const handleAdd = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    // Get user's org
+    const { data: orgs } = await supabase.from("organizations").select("id").eq("owner_id", user.id).limit(1);
+    const orgId = orgs?.[0]?.id || null;
+
     const { error } = await supabase.from("routers").insert({
-      user_id: user.id, name: form.name, location: form.location,
+      user_id: user.id, org_id: orgId, name: form.name, location: form.location,
       ip_address: form.ip_address, api_port: form.api_port, username: form.username,
       password: form.password, dns_name: form.dns_name, hotspot_address: form.hotspot_address,
       payment_destination: form.payment_destination, disable_sharing: form.disable_sharing,
       device_tracking: form.device_tracking, bandwidth_control: form.bandwidth_control,
       session_logging: form.session_logging,
     } as any);
-    if (error) { toast.error("Failed to add router"); }
+    if (error) toast.error("Failed to add router");
     else { toast.success("Router added!"); setDialogOpen(false); fetchRouters(); }
   };
 
-  const openScript = (router: RouterDevice) => {
-    setSelectedRouter(router);
-    setScriptDialogOpen(true);
-    setCopied(false);
+  const getProvisionUrl = (token: string) =>
+    `${supabaseUrl}/functions/v1/provision-router?token=${token}`;
+
+  const getMikroTikCommand = (token: string) =>
+    `/tool fetch url="${getProvisionUrl(token)}" mode=https dst-path=moonconnect.rsc\n/import moonconnect.rsc`;
+
+  const refreshToken = async (routerId: string) => {
+    const newToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const { error } = await supabase.from("routers").update({ provision_token: newToken } as any).eq("id", routerId);
+    if (error) toast.error("Failed to refresh link");
+    else {
+      toast.success("Provision link refreshed!");
+      fetchRouters();
+      if (selectedRouter?.id === routerId) {
+        setSelectedRouter({ ...selectedRouter, provision_token: newToken });
+      }
+    }
   };
 
-  const getScript = () => {
-    if (!selectedRouter) return "";
-    return generateMikroTikScript({
-      routerName: selectedRouter.name,
-      hotspotAddress: selectedRouter.hotspot_address || "10.5.50.1/24",
-      dnsName: selectedRouter.dns_name || "hotspot.local",
+  const downloadRsc = (router: RouterDevice) => {
+    const portalUrl = window.location.origin + "/portal";
+    const script = generateMikroTikScript({
+      routerName: router.name,
+      hotspotAddress: router.hotspot_address || "10.5.50.1/24",
+      dnsName: router.dns_name || "hotspot.local",
       portalUrl,
-      disableSharing: selectedRouter.disable_sharing,
-      deviceTracking: selectedRouter.device_tracking,
-      bandwidthControl: selectedRouter.bandwidth_control,
-      sessionLogging: selectedRouter.session_logging,
+      disableSharing: router.disable_sharing,
+      deviceTracking: router.device_tracking,
+      bandwidthControl: router.bandwidth_control,
+      sessionLogging: router.session_logging,
     });
+    const blob = new Blob([script], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "moonconnect.rsc";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("moonconnect.rsc downloaded!");
   };
 
-  const copyScript = async () => {
-    await navigator.clipboard.writeText(getScript());
-    setCopied(true);
-    toast.success("Script copied to clipboard!");
-    setTimeout(() => setCopied(false), 3000);
+  const openProvision = (router: RouterDevice) => {
+    setSelectedRouter(router);
+    setProvisionDialogOpen(true);
+    setCopiedLink(false);
+    setCopiedCmd(false);
+  };
+
+  const copyToClipboard = async (text: string, type: "link" | "cmd") => {
+    await navigator.clipboard.writeText(text);
+    if (type === "link") { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 3000); }
+    else { setCopiedCmd(true); setTimeout(() => setCopiedCmd(false), 3000); }
+    toast.success("Copied to clipboard!");
   };
 
   return (
@@ -142,37 +176,68 @@ export default function Routers() {
         </Dialog>
       </PageHeader>
 
-      {/* Script Dialog */}
-      <Dialog open={scriptDialogOpen} onOpenChange={setScriptDialogOpen}>
+      {/* Provision Dialog */}
+      <Dialog open={provisionDialogOpen} onOpenChange={setProvisionDialogOpen}>
         <DialogContent className="glass-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
-              <Terminal className="w-5 h-5 text-primary" />
-              MikroTik Setup Script — {selectedRouter?.name}
+              <Link2 className="w-5 h-5 text-primary" />
+              Provision Router — {selectedRouter?.name}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Copy this script and paste it into your MikroTik terminal (System → Terminal). It will auto-configure everything.
-          </p>
-          <div className="relative mt-2">
-            <pre className="bg-muted/50 border border-border rounded-lg p-4 text-xs font-mono overflow-x-auto max-h-[400px] overflow-y-auto whitespace-pre">
-              {getScript()}
-            </pre>
-            <Button
-              size="sm"
-              variant="outline"
-              className="absolute top-2 right-2"
-              onClick={copyScript}
-            >
-              {copied ? <Check className="w-4 h-4 mr-1 text-success" /> : <Copy className="w-4 h-4 mr-1" />}
-              {copied ? "Copied!" : "Copy"}
-            </Button>
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={() => { setCopied(false); setSelectedRouter({ ...selectedRouter! }); }}>
-              <RefreshCw className="w-4 h-4 mr-1" /> Regenerate Script
-            </Button>
-          </div>
+
+          {selectedRouter?.provision_token && (
+            <div className="space-y-5 mt-2">
+              {/* Option 1: Auto-provision link */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-foreground">Option 1: Auto-Provision via MikroTik Terminal</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Paste this command in MikroTik Terminal (System → Terminal). It will download and run the setup script automatically.
+                </p>
+                <div className="relative">
+                  <pre className="bg-muted/50 border border-border rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                    {getMikroTikCommand(selectedRouter.provision_token)}
+                  </pre>
+                  <Button size="sm" variant="outline" className="absolute top-2 right-2" onClick={() => copyToClipboard(getMikroTikCommand(selectedRouter.provision_token!), "cmd")}>
+                    {copiedCmd ? <Check className="w-3 h-3 mr-1 text-success" /> : <Copy className="w-3 h-3 mr-1" />}
+                    {copiedCmd ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Provision URL */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-foreground">Provision URL</h4>
+                <div className="relative">
+                  <pre className="bg-muted/50 border border-border rounded-lg p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                    {getProvisionUrl(selectedRouter.provision_token)}
+                  </pre>
+                  <Button size="sm" variant="outline" className="absolute top-1.5 right-1.5" onClick={() => copyToClipboard(getProvisionUrl(selectedRouter.provision_token!), "link")}>
+                    {copiedLink ? <Check className="w-3 h-3 mr-1 text-success" /> : <Copy className="w-3 h-3 mr-1" />}
+                    {copiedLink ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Option 2: Download .rsc */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-foreground">Option 2: Download & Import .rsc File</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Download the script file, upload it to MikroTik via Files, then run: <code className="text-primary">/import moonconnect.rsc</code>
+                </p>
+                <Button variant="outline" size="sm" onClick={() => downloadRsc(selectedRouter)}>
+                  <Download className="w-4 h-4 mr-2" /> Download moonconnect.rsc
+                </Button>
+              </div>
+
+              {/* Refresh link */}
+              <div className="flex gap-2 pt-2 border-t border-border">
+                <Button variant="outline" size="sm" onClick={() => refreshToken(selectedRouter.id)}>
+                  <RefreshCw className="w-4 h-4 mr-1" /> Refresh Provision Link
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -207,11 +272,11 @@ export default function Routers() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><span>{r.payment_destination}</span></div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => openScript(r)}>
-                  <Terminal className="w-3 h-3 mr-1" /> Get Script
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => openProvision(r)}>
+                  <Link2 className="w-3 h-3 mr-1" /> Provision
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Settings className="w-3 h-3 mr-1" /> Configure
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => downloadRsc(r)}>
+                  <Download className="w-3 h-3 mr-1" /> .rsc
                 </Button>
               </div>
             </div>

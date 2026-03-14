@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wifi, Mail, Lock, User, Loader as Loader2 } from "lucide-react";
+import { Wifi, Mail, Lock, User, Building2, Loader as Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Register() {
@@ -13,6 +13,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [ispName, setIspName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -28,6 +29,11 @@ export default function Register() {
       return;
     }
 
+    if (!ispName.trim()) {
+      toast.error("ISP / Business name is required");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,6 +43,7 @@ export default function Register() {
         options: {
           data: {
             full_name: fullName,
+            isp_name: ispName,
           },
         },
       });
@@ -44,7 +51,7 @@ export default function Register() {
       if (error) throw error;
 
       if (data.user) {
-        toast.success("Registration successful! Please check your email to verify your account.");
+        toast.success("Registration successful! You can now login.");
         navigate("/login");
       }
     } catch (error: any) {
@@ -61,11 +68,30 @@ export default function Register() {
           <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
             <Wifi className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-display font-bold gradient-text">HotSpot Pro</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create Admin Account</p>
+          <h1 className="text-2xl font-display font-bold gradient-text">MoonConnect</h1>
+          <p className="text-sm text-muted-foreground mt-1">Create your ISP Admin Account</p>
         </div>
 
         <form onSubmit={handleRegister} className="glass-card rounded-xl p-6 space-y-4">
+          <div>
+            <Label htmlFor="ispName">ISP / Business Name</Label>
+            <div className="relative mt-1.5">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="ispName"
+                type="text"
+                placeholder="e.g. StarLink WiFi"
+                className="pl-10"
+                value={ispName}
+                onChange={(e) => setIspName(e.target.value)}
+                required
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Your subdomain will be: <span className="text-primary font-mono">{ispName ? ispName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : 'your-isp'}.moonconnect.app</span>
+            </p>
+          </div>
+
           <div>
             <Label htmlFor="fullName">Full Name</Label>
             <div className="relative mt-1.5">
@@ -141,7 +167,7 @@ export default function Register() {
                 Creating account...
               </>
             ) : (
-              "Create Account"
+              "Create ISP Account"
             )}
           </Button>
 
