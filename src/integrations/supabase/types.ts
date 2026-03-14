@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          subdomain: string
+          support_email: string | null
+          support_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id: string
+          subdomain: string
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          subdomain?: string
+          support_email?: string | null
+          support_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           active: boolean
@@ -23,6 +59,7 @@ export type Database = {
           duration_minutes: number
           id: string
           name: string
+          org_id: string | null
           price: number
           speed_limit: string | null
           user_id: string
@@ -35,6 +72,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           name: string
+          org_id?: string | null
           price?: number
           speed_limit?: string | null
           user_id: string
@@ -47,11 +85,20 @@ export type Database = {
           duration_minutes?: number
           id?: string
           name?: string
+          org_id?: string | null
           price?: number
           speed_limit?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "packages_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -59,6 +106,7 @@ export type Database = {
           created_at: string
           id: string
           method: string
+          org_id: string | null
           package_name: string
           phone: string
           router_name: string | null
@@ -72,6 +120,7 @@ export type Database = {
           created_at?: string
           id?: string
           method?: string
+          org_id?: string | null
           package_name: string
           phone: string
           router_name?: string | null
@@ -85,6 +134,7 @@ export type Database = {
           created_at?: string
           id?: string
           method?: string
+          org_id?: string | null
           package_name?: string
           phone?: string
           router_name?: string | null
@@ -93,7 +143,15 @@ export type Database = {
           transaction_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -134,8 +192,10 @@ export type Database = {
           location: string
           model: string
           name: string
+          org_id: string | null
           password: string
           payment_destination: string
+          provision_token: string | null
           session_logging: boolean
           status: string
           user_id: string
@@ -155,8 +215,10 @@ export type Database = {
           location?: string
           model?: string
           name: string
+          org_id?: string | null
           password?: string
           payment_destination?: string
+          provision_token?: string | null
           session_logging?: boolean
           status?: string
           user_id: string
@@ -176,14 +238,24 @@ export type Database = {
           location?: string
           model?: string
           name?: string
+          org_id?: string | null
           password?: string
           payment_destination?: string
+          provision_token?: string | null
           session_logging?: boolean
           status?: string
           user_id?: string
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "routers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sessions: {
         Row: {
@@ -194,6 +266,7 @@ export type Database = {
           login_time: string
           logout_time: string | null
           mac_address: string | null
+          org_id: string | null
           package_name: string
           phone: string
           router_id: string | null
@@ -208,6 +281,7 @@ export type Database = {
           login_time?: string
           logout_time?: string | null
           mac_address?: string | null
+          org_id?: string | null
           package_name: string
           phone: string
           router_id?: string | null
@@ -222,6 +296,7 @@ export type Database = {
           login_time?: string
           logout_time?: string | null
           mac_address?: string | null
+          org_id?: string | null
           package_name?: string
           phone?: string
           router_id?: string | null
@@ -229,6 +304,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sessions_router_id_fkey"
             columns: ["router_id"]
@@ -258,6 +340,7 @@ export type Database = {
           intasend_pub_key: string | null
           intasend_secret_key: string | null
           mac_binding: boolean | null
+          org_id: string | null
           paybill_number: string | null
           paystack_pub_key: string | null
           paystack_secret_key: string | null
@@ -289,6 +372,7 @@ export type Database = {
           intasend_pub_key?: string | null
           intasend_secret_key?: string | null
           mac_binding?: boolean | null
+          org_id?: string | null
           paybill_number?: string | null
           paystack_pub_key?: string | null
           paystack_secret_key?: string | null
@@ -320,6 +404,7 @@ export type Database = {
           intasend_pub_key?: string | null
           intasend_secret_key?: string | null
           mac_binding?: boolean | null
+          org_id?: string | null
           paybill_number?: string | null
           paystack_pub_key?: string | null
           paystack_secret_key?: string | null
@@ -332,7 +417,15 @@ export type Database = {
           user_id?: string
           welcome_message?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -358,6 +451,7 @@ export type Database = {
           created_at: string
           expiry_date: string | null
           id: string
+          org_id: string | null
           package_id: string | null
           package_name: string
           status: string
@@ -368,6 +462,7 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          org_id?: string | null
           package_id?: string | null
           package_name: string
           status?: string
@@ -378,12 +473,20 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          org_id?: string | null
           package_id?: string | null
           package_name?: string
           status?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vouchers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vouchers_package_id_fkey"
             columns: ["package_id"]
