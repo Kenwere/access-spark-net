@@ -2,3 +2,12 @@ project_id = "zakwbqlburshmdjptcwb"
 
 [functions.provision-router]
 verify_jwt = false
+
+[functions.initiate-payment]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.expire-sessions]
+verify_jwt = false

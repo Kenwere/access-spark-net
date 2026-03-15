@@ -14,6 +14,7 @@ import Vouchers from "./pages/Vouchers";
 import Routers from "./pages/Routers";
 import Rankings from "./pages/Rankings";
 import SettingsPage from "./pages/SettingsPage";
+import TeamPage from "./pages/TeamPage";
 import CaptivePortal from "./pages/CaptivePortal";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -26,30 +27,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setLoading(false); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setSession(session); });
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div></div>;
+  if (!session) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
@@ -71,6 +55,7 @@ const App = () => (
             <Route path="/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
             <Route path="/routers" element={<ProtectedRoute><Routers /></ProtectedRoute>} />
             <Route path="/rankings" element={<ProtectedRoute><Rankings /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

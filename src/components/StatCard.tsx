@@ -12,7 +12,7 @@ interface StatCardProps {
 
 export default function StatCard({ title, value, change, changeType = "neutral", icon: Icon, className }: StatCardProps) {
   return (
-    <div className={cn("glass-card-glow rounded-xl p-5 animate-slide-up", className)}>
+    <div className={cn("glass-card p-5", className)}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
