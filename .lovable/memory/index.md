@@ -2,7 +2,7 @@ MoonConnect WiFi billing system - design system and hosting preferences
 
 ## Hosting
 - Frontend: Vercel (wildcard subdomain for multi-tenant)
-- Backend: Lovable Cloud (Supabase)
+- Backend: Lovable Cloud
 
 ## Design
 - Font display: JetBrains Mono
@@ -23,6 +23,12 @@ MoonConnect WiFi billing system - design system and hosting preferences
 - Organizations table with subdomain field
 - ISP registers → auto-creates org with subdomain
 - Settings per org (payment credentials, branding, portal theme)
+- Portal accessed via ?org=subdomain or subdomain.moonconnect.app
+
+## Portal Themes
+- 10 themes: classic, midnight, emerald, sunset, rose, ocean, clean, purple, slate, neon
+- ISP selects theme in Settings, stored as portal_theme in settings table
+- Themes defined in src/lib/portal-themes.ts
 
 ## Payment Gateways
 - Paystack, IntaSend, PesaPal supported
@@ -31,4 +37,9 @@ MoonConnect WiFi billing system - design system and hosting preferences
 
 ## MikroTik
 - provision-router edge function serves .rsc scripts via token URL
-- Download moonconnect.rsc or auto-fetch via /tool fetch
+- Supports both hotspot and PPPoE (connection_type on routers table)
+
+## Session Management
+- expire-sessions runs every minute via pg_cron
+- Auto-disconnect when expires_at < now()
+- Manual: disconnect, extend, delete, add free user
